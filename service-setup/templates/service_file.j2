@@ -1,0 +1,14 @@
+[Unit]
+Description={{service_description}}
+
+[Service]
+EnvironmentFile={{env_file}}
+ExecStart={{service_command}}
+{% schedule|default("") != "" %}
+ExecStopPost={{service_folder}}/{{service_name}}_failure.sh
+{% endif %}
+
+{% schedule|default("") == "" %}
+[Install]
+WantedBy=default.target
+{% endif %}

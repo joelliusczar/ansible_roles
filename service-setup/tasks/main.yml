@@ -24,40 +24,36 @@
     group: '{{service_group}}'
   become: true
 - name: Add service file
-  copy:
+  template:
     dest: '{{service_folder}}/{{service_name}}.service'
     owner: '{{service_owner}}'
     group: '{{service_group}}'
-    content: |
-      [Unit]
-      Description={{service_description}}
-
-      [Service]
-      EnvironmentFile={{env_file}}
-      ExecStart={{service_command}}
-
-      [Install]
-      WantedBy=default.target
+    src: service_file.j2
   become: true
   register: service_add_res
 - name: Add timer
-  copy:
+  template:
     dest: '{{service_folder}}/{{service_name}}.timer'
     owner: '{{service_owner}}'
     group: '{{service_group}}'
-    content: |
-      [Unit]
-      Description={{service_description}}
-
-      [Timer]
-      OnCalendar={{schedule}}
-      Persistent=true
-
-      [Install]
-      WantedBy=timers.target
+    src: timer_file.j2
   when: schedule|default("") != ""
   become: true
   register: timer_add_res
+- name: Add timer failure handler
+  copy:
+    dest: '{{service_folder}}/{{service_name}}_failure.sh'
+    owner: '{{service_owner}}'
+    group: '{{service_group}}'
+    content: |
+      #!/bin/sh
+      if (exit "$EXIT_CODE"); then
+        systemctl disable --now {{user_flag}} {{service_name}}.timer
+      fi
+  when: schedule|default("") != ""
+  vars:
+    user_flag: service_scope|default("user") == "user"|ternary("--user","")
+  become: true
 #we couldn't have this as a handler because it was only firing for the first
 #service added
 - name: 'Start Service: {{service_name}}'
@@ -65,7 +61,7 @@
     name: '{{service_name}}.{{(schedule|default("") != "")|ternary("timer","service")}}'
     daemon_reload: true
     enabled: true
-    state: '{{(schedule|default("") != "")|ternary("started","reloaded")}}'
+    state: started
     scope: '{{service_scope|default("user")}}'
   become: true
   become_user: '{{service_owner}}'
