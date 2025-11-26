@@ -90,7 +90,7 @@
       line: 'PasswordAuthentication no'
     - regexp: '^PermitRootLogin'
       line: 'PermitRootLogin no'
-    - regexp: '^Port'
+    - regexp: '^#?Port'
       line: 'Port {{access_port}}'
     - regexp: '^DenyUsers'
       line: 'DenyUsers {{server_user}}'
