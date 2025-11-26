@@ -33,7 +33,6 @@
   git:
     dest: '{{build_path}}'
     repo: https://github.com/joelliusczar/ices0.git
-    version: restructure-logging
 - name: Aclocal
   command:
     cmd: aclocal
