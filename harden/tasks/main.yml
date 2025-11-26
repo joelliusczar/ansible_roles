@@ -1,0 +1,114 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for harden
+
+
+- name: Check if we're using the default SSH port
+  wait_for:
+    port: 22
+    state: 'stopped'
+    host: '{{inventory_hostname}}'
+    connect_timeout: 3
+    timeout: 3
+  delegate_to: 'localhost'
+  ignore_errors: true
+  no_log: true
+  register: port_check
+- name: Exit if port 22 is closed
+  meta: end_role
+  when: port_check is defined and
+    port_check.state|default(omit) == "stopped"
+- name: Add host to trusted
+  shell: "ssh-keyscan -H {{inventory_hostname}} >> ~/.ssh/known_hosts"
+  delegate_to: localhost
+- name: Define host name
+  set_fact:
+    #combining the app name with the last segment of the ip address
+    config_host_name: '{{app_name}}-{{(inventory_hostname | regex_replace("[:.]", ":")).split(":")[-1]}}'
+- name: Add groups
+  group:
+    name: '{{item}}'
+    state: present
+  loop:
+    - '{{app_group}}'
+    - '{{app_user}}'
+  become: true
+  no_log: true
+- name: Add user
+  user:
+    name: '{{app_user}}'
+    group: '{{app_user}}'
+    generate_ssh_key: true
+    ssh_key_type: 'ed25519'
+    shell: /bin/bash
+    ssh_key_comment: 'ansible-generated for {{config_host_name}}'
+  register: user_info
+- name: Add user to group
+  user:
+    name: '{{app_user}}'
+    groups: '{{app_group}}'
+    append: true
+  become: true
+- name: Define local ssh key paths
+  set_fact:
+    local_ssh_key_paths:
+      private: '~/.ssh/{{config_host_name}}_nr_ssh.private.key'
+      public: '~/.ssh/{{config_host_name}}_nr_ssh.public.key'
+- name: Save the ssh key
+  fetch:
+    src: '{{user_info.ssh_key_file}}'
+    dest: '{{local_ssh_key_paths["private"]}}'
+    flat: true
+- name: Add authorized
+  lineinfile:
+    path: '/home/{{app_user}}/.ssh/authorized_keys'
+    line: '{{user_info.ssh_public_key}}'
+    create: true
+    group: '{{app_group}}'
+    owner: '{{app_user}}'
+- name: Save the public key
+  copy:
+    content: '{{user_info.ssh_public_key}}'
+    dest: '{{local_ssh_key_paths["public"]}}'
+  delegate_to: localhost
+- name: Add sudo rights for deployment user.
+  lineinfile:
+    dest: /etc/sudoers
+    regexp: '^{{app_user}}'
+    line: '{{app_user}} ALL=(ALL) NOPASSWD: ALL'
+    state: present
+    validate: 'visudo -cf %s'
+- name: Update SSH configuration to be more secure.
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '{{item.regexp}}'
+    line: '{{item.line}}'
+    state: present
+    validate: 'sshd -t -f %s'
+  loop:
+    - regexp: '^PasswordAuthentication'
+      line: 'PasswordAuthentication no'
+    - regexp: '^PermitRootLogin'
+      line: 'PermitRootLogin no'
+    - regexp: '^Port'
+      line: 'Port {{access_port}}'
+    - regexp: '^DenyUsers'
+      line: 'DenyUsers {{server_user}}'
+  loop_control:
+    label: '{{item.regexp}}'
+  notify: restart ssh
+- name: Update local ssh config
+  blockinfile:
+    path: ~/.ssh/config
+    marker: '# {mark} ANSIBLE - {{config_host_name|upper}}'
+    block: |
+      Host {{config_host_name}} 
+        Hostname {{inventory_hostname}}
+        AddKeysToAgent yes
+        IdentityFile {{local_ssh_key_paths["private"]}}
+        User {{app_user}}
+        IdentitiesOnly yes
+  delegate_to: localhost
+- name: Add key to local agent
+  command: 'ssh-add {{local_ssh_key_paths["private"]}}'
+  delegate_to: localhost

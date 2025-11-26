@@ -1,0 +1,27 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for service-user-setup
+- name: Add user
+  user:
+    name: '{{server_user}}'
+    group: '{{app_group}}'
+    shell: /bin/bash
+    password_lock: true
+  become: true
+- name: Allow login user to su as server user
+  blockinfile:
+    path: /etc/pam.d/su
+    insertafter: '^auth +sufficient pam_rootok.so'
+    marker: '# {mark} ANSIBLE - {{server_user}}'
+    block: |
+      auth  [success=ignore default=1] pam_succeed_if.so user = {{server_user}}
+      auth  sufficient                 pam_succeed_if.so use_uid user = {{app_user}}
+  become: true
+- name: Enable Linger for server user user
+  command: 
+    argv:
+      - loginctl 
+      - enable-linger 
+      - '{{server_user}}'
+    creates: '/var/lib/systemd/linger/{{server_user}}'
+  become: true

@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for harden
+- name: restart ssh
+  service: 
+    name: ssh 
+    state: restarted
+    enabled: true
+  become: true
