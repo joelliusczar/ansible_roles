@@ -57,11 +57,11 @@
 #we couldn't have this as a handler because it was only firing for the first
 #service added
 - name: 'Start Service: {{service_name}}'
-  systemd_service:
+  service:
     name: '{{service_name}}.{{(schedule|default("") != "")|ternary("timer","service")}}'
     daemon_reload: true
     enabled: true
-    state: started
+    state: restarted
     scope: '{{service_scope|default("user")}}'
   become: true
   become_user: '{{service_owner}}'
