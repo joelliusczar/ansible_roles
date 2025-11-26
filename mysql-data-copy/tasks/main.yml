@@ -24,11 +24,7 @@
       hostname: '{{src_host_hostname}}'
       ansible_port: '{{loaded_inventory["_meta"]["hostvars"][src_host_hostname]["ansible_port"]}}'
       ansible_user: '{{loaded_inventory["_meta"]["hostvars"][src_host_hostname]["ansible_user"]}}'
-- name: Install PyMySQL #needed for ansible to do stuff with mysql
-  apt:
-    name: '{{pymysql_pkg}}'
-    state: present
-  become: true
+      ansible_ssh_private_key_file: '{{loaded_inventory["_meta"]["hostvars"][src_host_hostname]["seed_private_key"]}}'
 - name: Check for previous import file
   stat:
     path: '/usr/local/share/{{app_name}}/mysql_dump.sql'
@@ -48,6 +44,7 @@
   vars:
     ansible_port: '{{hostvars[inventory_hostname]["src_host"]["ansible_port"]}}'
     ansible_user: '{{hostvars[inventory_hostname]["src_host"]["ansible_user"]}}'
+    ansible_ssh_private_key_file: '{{hostvars[inventory_hostname]["src_host"]["ansible_ssh_private_key_file"]}}'
 - name: Fetched the dumped sql from src host to localhost
   fetch:
     src: /tmp/backup.sql
@@ -57,6 +54,7 @@
   vars:
     ansible_port: '{{hostvars[inventory_hostname]["src_host"]["ansible_port"]}}'
     ansible_user: '{{hostvars[inventory_hostname]["src_host"]["ansible_user"]}}'
+    ansible_ssh_private_key_file: '{{hostvars[inventory_hostname]["src_host"]["ansible_ssh_private_key_file"]}}'
 - name: Clean up the dumped sql on src host
   file:
     path: /tmp/backup.sql
@@ -65,10 +63,16 @@
   vars:
     ansible_port: '{{hostvars[inventory_hostname]["src_host"]["ansible_port"]}}'
     ansible_user: '{{hostvars[inventory_hostname]["src_host"]["ansible_user"]}}'
+    ansible_ssh_private_key_file: '{{hostvars[inventory_hostname]["src_host"]["ansible_ssh_private_key_file"]}}'
 - name: Copy MySQL dump file to destination remote host
   copy:
     src: ~/Documents/mysql_dumps/{{ now(fmt='%Y%m%d')}}_backup.sql
     dest: '/usr/local/share/{{app_name}}/mysql_dump.sql'
+- name: Install PyMySQL #needed for ansible to do stuff with mysql
+  apt:
+    name: '{{pymysql_pkg}}'
+    state: present
+  become: true
 - name: Import MySQL dump into database
   community.mysql.mysql_db:
     name: '{{db_name}}'
