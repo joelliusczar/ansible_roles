@@ -1,6 +1,13 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # tasks file for service-user-setup
+- name: Add to known hosts
+  known_hosts:
+    name: '[{{inventory_hostname}}]:{{access_port}}'
+    key: '[{{inventory_hostname}}]:{{access_port}} {{lookup("pipe", keyscan_cmd)}}'
+  vars:
+    keyscan_cmd: 'ssh-keyscan -p {{access_port}} {{ inventory_hostname }}'
+  delegate_to: localhost
 - name: Add user
   user:
     name: '{{server_user}}'

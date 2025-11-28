@@ -52,6 +52,13 @@
 - name: Store library dir path
   set_fact:
     py_lib_dir_dest_path: '{{py_env_path}}/lib/python3.{{py_minor_version}}/site-packages/{{app_details["engine"]}}'
+- name: Ensure we can act on the present Files
+  file:
+    path: '{{py_lib_dir_dest_path}}'
+    recurse: true
+    state: directory
+    group: '{{app_group}}'
+    mode: g+w
 - name: Replace Library Files
   synchronize:
     src: '{{engine_src}}'
