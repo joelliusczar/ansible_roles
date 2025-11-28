@@ -59,6 +59,7 @@
     state: directory
     group: '{{app_group}}'
     mode: g+w
+  when: app_group is defined
 - name: Replace Library Files
   synchronize:
     src: '{{engine_src}}'
