@@ -23,6 +23,7 @@
     env_name: '{{app_details["prefix"]|lower}}_env'
     engine_src: '{{src_dirs["engine"]}}/'
     working_dir: '{{test_trunk}}'
+    app_group: '{{domain["group"]}}'
 - name: Setup self signed certificate for manual testing
   include_role:
     name: local-cert-setup
