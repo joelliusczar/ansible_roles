@@ -4,9 +4,9 @@
 - name: Assign cert file paths to vars
   set_fact:
     cert_files:
-      public: '~/.ssh/{{__cert_prefix_lcs__}}.public.pem'
-      private: '~/.ssh/{{__cert_prefix_lcs__}}.private.pem'
-      csr: '~/.ssh/{{__cert_prefix_lcs__}}.csr'
+      public: '/home/{{ansible_user}}/.ssh/{{__cert_prefix_lcs__}}.public.pem'
+      private: '/home/{{ansible_user}}/.ssh/{{__cert_prefix_lcs__}}.private.pem'
+      csr: '/home/{{ansible_user}}/.ssh/{{__cert_prefix_lcs__}}.csr'
 - name: Generate an OpenSSL private key.
   openssl_privatekey:
     path: '{{cert_files["private"]}}'
