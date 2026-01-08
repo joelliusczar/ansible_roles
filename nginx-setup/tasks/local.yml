@@ -10,7 +10,7 @@
     name: local-cert-setup
   vars:
     local_env_name: '{{__env_name_ngx__}}'
-    local_cert_prefix: '{{__common_name_ngx__}}'
+    local_common_name: '{{__common_name_ngx__}}'
 - name: Replace web config
   become: true
   template: 
