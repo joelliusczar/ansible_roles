@@ -11,14 +11,6 @@
   package:
     name: rsync
   tags: entitled
-- name: Regen Reference file
-  script: >
-    regen_file_reference_file.py
-    '{{sql_scripts_src}}'
-    '{{reference_file_out_path}}'
-  args:
-    executable: python3
-  delegate_to: localhost
 - name: Set up py env.
   command: 
     argv:
