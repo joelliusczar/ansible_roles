@@ -1,15 +1,5 @@
 ---
 # tasks file for mysql-setup
-- name: Replace SQL scripts
-  synchronize:
-    src: '{{src_dirs["sql_scripts"]}}'
-    dest: '{{item}}'
-    delete: true
-  when: item != test_trunk|default(omit) or inventory_hostname in ["127.0.0.1", "localhost"]
-  loop:
-    - '{{app_trunk}}'
-    - '{{test_trunk|default(omit)}}'
-  no_log: true
 - name: Install Maria DB
   become: true
   package: 
