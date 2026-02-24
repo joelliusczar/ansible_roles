@@ -23,6 +23,15 @@
     owner: '{{service_owner}}'
     group: '{{service_group}}'
   become: true
+- name: Add provided service file
+  copy:
+    dest: '{{service_folder}}/{{service_name}}.service'
+    owner: '{{service_owner}}'
+    group: '{{service_group}}'
+    content: '{{service_content}}'
+  become: true
+  register: service_add_res
+  when: service_content is defined
 - name: Add service file
   template:
     dest: '{{service_folder}}/{{service_name}}.service'
@@ -31,6 +40,7 @@
     src: service_file.j2
   become: true
   register: service_add_res
+  when: service_content is not defined
 - name: Add timer
   template:
     dest: '{{service_folder}}/{{service_name}}.timer'

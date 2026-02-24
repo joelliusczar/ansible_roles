@@ -1,0 +1,62 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for postgresql-setup
+- name: Install postgresql
+  become: true
+  package: 
+    name: '{{pkg_name}}'
+  tags: entitled
+- name: Install python3-psycopg2
+  become: true
+  package: 
+    name: '{{py_pkg_name}}'
+  tags: entitled
+- name: Install postgresql client
+  become: true
+  package: 
+    name: 'postgresql-client'
+  when: ansible_os_family == "Debian"
+  tags: entitled
+- name: install libpq-dev
+  become: true
+  package: 
+    name: 'libpq-dev'
+  when: ansible_os_family == "Debian"
+  tags: entitled
+- name: Create owner
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: '{{db_owner}}'
+    password: '{{db_pass_owner}}'
+  tags: entitled
+- name: Create the database
+  become: true
+  become_user: postgres
+  postgresql_db:
+    name: '{{db_name}}'
+    owner: '{{db_owner}}'
+  tags: entitled
+- name: Create api user
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: '{{db_api_user}}'
+    password: '{{db_pass_api}}'
+  tags: entitled
+- name: Create janitor user
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: '{{db_janitor_user}}'
+    password: '{{db_pass_janitor}}'
+  tags: entitled
+- name: Grant all privileges on the database to the user
+  become: true
+  become_user: postgres
+  postgresql_privs:
+    login_db: '{{db_name}}'
+    role: '{{db_owner}}'
+    type: database
+    privs: ALL
+  tags: entitled

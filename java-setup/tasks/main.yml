@@ -1,0 +1,80 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for java-setup
+- name: Install sdkman
+  shell: curl -s "https://get.sdkman.io" | bash
+  args:
+    creates: /home/{{java_user}}/.sdkman/bin/sdkman-init.sh
+  delegate_to: '{{runat}}'
+  tags: entitled
+- name: Adding SDK Man to profile
+  lineinfile:
+    path: /home/{{java_user}}/.profile
+    line: '. "$HOME/.sdkman/bin/sdkman-init.sh"'
+    state: present
+  delegate_to: '{{runat}}'
+  tags: entitled
+- name: Install Java 25
+  shell: . /home/{{java_user}}/.sdkman/bin/sdkman-init.sh && sdk install java 25.0.2-tem
+  args:
+    creates: /home/{{java_user}}/.sdkman/candidates/java/25.0.2-tem
+    executable: /bin/bash #apparently sdkman needs to be run in a bash shell
+  delegate_to: '{{runat}}'
+  tags: entitled
+- name: Install gradle
+  shell: . /home/{{java_user}}/.sdkman/bin/sdkman-init.sh && sdk install gradle 9.3.1
+  args:
+    creates: /home/{{java_user}}/.sdkman/candidates/gradle/9.3.1
+    executable: /bin/bash
+  delegate_to: '{{runat}}'
+  tags: entitled
+  when: gradle_install|default(false) == true
+- name: Install tomcat
+  shell: . /home/{{java_user}}/.sdkman/bin/sdkman-init.sh && sdk install tomcat 11.0.18
+  args:
+    creates: /home/{{java_user}}/.sdkman/candidates/tomcat/11.0.18
+    executable: /bin/bash
+  delegate_to: '{{runat}}'
+  tags: entitled
+- name: Set tomcat permissions
+  file:
+    path: '{{item}}'
+    state: file
+    owner: '{{java_user}}'
+    group: '{{java_group}}'
+    mode: 'u+x'
+  no_log: true
+  with_fileglob:
+    - '/home/{{java_user}}/.sdkman/candidates/tomcat/current/bin/*.sh'
+- name: Setup tomcat service
+  include_role:
+    name: service-setup
+  vars:
+    service_name: tomcat
+    service_owner: '{{java_user}}'
+    service_group: '{{java_group}}'
+    service_scope: user
+    service_content: |
+      [Unit]
+      Description=Tomcat server
+      After=network.target
+
+      [Service]
+      Type=forking
+
+
+      Environment="JAVA_HOME=/home/{{java_user}}/.sdkman/candidates/java/current"
+      Environment="CATALINA_HOME=/home/{{java_user}}/.sdkman/candidates/tomcat/current"
+      Environment="CATALINA_BASE=/home/{{java_user}}/.sdkman/candidates/tomcat/current"
+      Environment="CATALINA_PID=/home/{{java_user}}/.sdkman/candidates/tomcat/current/temp/tomcat.pid"
+      # Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+      # Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
+      ExecStart=/home/{{java_user}}/.sdkman/candidates/tomcat/current/bin/startup.sh
+      ExecStop=/home/{{java_user}}/.sdkman/candidates/tomcat/current/bin/shutdown.sh
+
+      RestartSec=10
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  tags: entitled
