@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for prometheus-setup
+- name: Install fail2ban
+  package: 
+    name: '{{packages["fail2ban"]}}'
+  become: true
