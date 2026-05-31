@@ -27,7 +27,7 @@
     dest: /tmp/vm.csr
     flat: true
 - name: Generate a Self Signed OpenSSL certificate.
-  openssl_certificate:
+  x509_certificate:
     path: /tmp/public.key.pem
     privatekey_path: /tmp/private.key.pem
     csr_path: /tmp/vm.csr

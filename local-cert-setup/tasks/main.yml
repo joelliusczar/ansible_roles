@@ -1,4 +1,9 @@
 #SPDX-License-Identifier: MIT-0
+
+#ansible_user
+#local_cert_prefix
+#local_common_name
+#local_env_name
 ---
 # tasks file for local-cert-setup
 - name: Tasks for a local server

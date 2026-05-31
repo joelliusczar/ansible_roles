@@ -16,12 +16,13 @@
     privatekey_path: '{{cert_files["private"]}}'
     common_name: '{{__common_name_lcs__}}'
 - name: Generate a Self Signed OpenSSL certificate.
-  openssl_certificate:
+  community.crypto.x509_certificate:
     path: '{{cert_files["public"]}}'
     privatekey_path: '{{cert_files["private"]}}'
     csr_path: '{{cert_files["csr"]}}'
     provider: selfsigned
     selfsigned_not_after: "+7d"
+    ignore_timestamps: false
 - name: Ensure Browser can see certificate
   become: true
   script: >
