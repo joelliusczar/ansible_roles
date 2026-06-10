@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for maintenance-helper-setup
+- name: Copy my history cleaner
+  copy:
+    src: history_cleaner.py
+    dest: '/home/{{mt_user}}/'
+- name: Update icecast config
+  lineinfile:
+    dest: '/home/{{mt_user}}/.vimrc'
+    regexp: '{{item.regexp}}'
+    line: '{{item.line}}'
+    state: present
+    create: true
+  loop:
+  - regexp: 'set nonumber'
+    line: 'set number'
+  - regexp: 'set expandtab'
+    line: 'set noexpandtab'
+  - regexp: 'set tabstop=\d+'
+    line: 'set tabstop=2'
