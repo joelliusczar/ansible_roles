@@ -1,3 +1,8 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # handlers file for prometheus-setup
+- name: Restart fail2ban
+  become: true
+  service:
+    name: fail2ban
+    state: reloaded

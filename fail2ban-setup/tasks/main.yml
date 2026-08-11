@@ -5,3 +5,15 @@
   package: 
     name: '{{packages["fail2ban"]}}'
   become: true
+- name: Tweak sshd scanning
+  blockinfile:
+      path: /etc/fail2ban/jail.d/sshd-journal-fix.conf
+      marker: '# {mark} ANSIBLE - ssh ban'
+      block: |
+        [sshd]
+        backend = systemd
+        journalmatch = _SYSTEMD_UNIT=ssh.service
+      create: true
+  become: true
+  notify: Restart fail2ban
+  when: ansible_os_family == "Debian"
