@@ -48,5 +48,5 @@
     src: nginx_template.j2
     dest: '/etc/nginx/sites-enabled/{{__conf_name_ngx__}}.conf'
   vars:
-    listen: '443 ssl ipv6only=off'
+    listen: '443 ssl'
   notify: Restart nginx

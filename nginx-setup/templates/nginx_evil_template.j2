@@ -1,16 +1,15 @@
 server {
-	listen 80;
-	server_name "";
-	return 444;
+	listen 80 default_server;
+	listen [::]:80 default_server;
+	server_name _;
+	return 444; 
 }
 
 
-#server {
-#	listen 443;
-#should be the public key
-#ssl_certificate {{cert_files["public"]}};
-#should be the private key
-#	ssl_certificate_key {{cert_files["private"]}};
-#	server_name "";
-#	return 444;
-#}
+server {
+	listen 443 default_server;
+	listen [::]:443 default_server;
+	ssl_reject_handshake on;
+	server_name _;
+	return 444; 
+}
