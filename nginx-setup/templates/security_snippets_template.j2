@@ -1,0 +1,9 @@
+	#should be the public key
+	ssl_certificate {{cert_files["public"]}};
+
+	#should be the private key
+	ssl_certificate_key {{cert_files["private"]}};
+
+	#should be the intermediate key if relevant
+	#apparently this isn't needed anymore with porkbun?
+	#ssl_trusted_certificate <ssl_intermediate>;

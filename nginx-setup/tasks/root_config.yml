@@ -1,0 +1,9 @@
+---
+- name: Disable server tokens
+  become: true
+  lineinfile:
+    path: '{{__root_config__}}'
+    insertafter: '^http {'
+    line: 'server_tokens on;'
+    regexp: '^ *#? *server_tokens .+;$'
+    validate: 'nginx -t -c %s'

@@ -11,11 +11,23 @@
   vars:
     local_env_name: '{{__env_name_ngx__}}'
     local_common_name: '{{__common_name_ngx__}}'
+- name: Create snippets directory
+  become: true
+  file:
+    path: /etc/nginx/sites-enabled/snippets/optional.d
+    state: directory
+- name: Copy ssl snippets
+  become: true
+  template:
+    src: security_snippets_template.j2
+    dest: /etc/nginx/sites-enabled/snippets/security.conf
+    validate: 'nginx -t -c %s'
 - name: Replace web config
   become: true
   template: 
     src: nginx_template.j2
     dest: '/etc/nginx/sites-enabled/{{__conf_name_ngx__}}.conf'
+    validate: 'nginx -t -c %s'
   vars:
     listen: 8080 ssl
   notify: Restart nginx
