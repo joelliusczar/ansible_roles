@@ -9,6 +9,10 @@
   file:
     path: /etc/nginx/sites-enabled/default
     state: absent
+- name: Create backup directory
+  file:
+    path: '{{"~"|expanduser}}/backups'
+    state: directory
 - name: Tasks for a local server
   include_tasks: local.yml
   vars:
@@ -40,6 +44,32 @@
   include_tasks: root_config.yml
   vars:
     __root_config__: '{{root_config}}'
-
+- name: Safely replace app specific config
+  block:
+    - name: Manually Backup app specific configs
+      copy:
+        remote_src: true
+        src: '/etc/nginx/sites-enabled/snippets/optional.d/app_{{env_name}}'
+        dest: '{{"~"|expanduser}}/backups/{{env_name}}'
+      failed_when: false
+    - name: Replace app Specific config
+      become: true
+      template: 
+        src: nginx_template.j2
+        dest: '/etc/nginx/sites-enabled/snippets/optional.d/app_{{env_name}}'
+      notify: Restart nginx
+      register:
+        updated
+    - name: Run validation
+      command: 'nginx -t'
+      become: true
+      when: updated is changed
+  rescue:
+    - name: Restore old config
+      copy:
+        remote_src: true
+        src: '{{"~"|expanduser}}/backups/{{env_name}}'
+        dest: '/etc/nginx/sites-enabled/snippets/optional.d/app_{{env_name}}'
+      when: updated is changed
 
 

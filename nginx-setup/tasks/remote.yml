@@ -55,7 +55,7 @@
 - name: Replace web config
   become: true
   template: 
-    src: nginx_template.j2
+    src: nginx_common_template.j2
     dest: '/etc/nginx/sites-enabled/{{__conf_name_ngx__}}.conf'
     validate: 'nginx -t -c %s'
   vars:
