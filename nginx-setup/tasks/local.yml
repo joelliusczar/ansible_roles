@@ -15,7 +15,7 @@
   become: true
   template:
     src: security_snippets_template.j2
-    dest: '{{__sec_snippet_ngx__}}'
+    dest: '{{__sec_snippets_ngx__}}'
 - name: Replace web config
   become: true
   template: 
@@ -23,5 +23,7 @@
     dest: '{{__conf_name_ngx__}}'
   vars:
     listen: 8080 ssl
+    security_snippets: '{{__sec_snippets_ngx__}}'
+    optional_snippets: '{{__optional_snippets_ngx__}}'
   notify: Restart nginx
   when: __env_name_ngx__ != "debug"
