@@ -42,6 +42,11 @@
     src: nginx_evil_template.j2
     dest: /etc/nginx/sites-enabled/nginx_evil.conf
     validate: 'nginx -t -c %s'
+- name: Copy ssl snippets
+  become: true
+  template:
+    src: security_snippets_template.j2
+    dest: '{{__sec_snippet_ngx__}}'
 - name: Replace web config
   become: true
   template: 

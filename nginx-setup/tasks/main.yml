@@ -48,17 +48,13 @@
   file:
     path: /etc/nginx/sites-enabled/snippets/optional.d
     state: directory
-- name: Copy ssl snippets
-  become: true
-  template:
-    src: security_snippets_template.j2
-    dest: /etc/nginx/sites-enabled/snippets/security.conf
 - name: Tasks for a local server
   include_tasks: local.yml
   vars:
     __conf_name_ngx__: '{{configs["app_common"]["path"]}}'
     __env_name_ngx__: '{{env_name}}'
     __common_name_ngx__: '{{common_name}}'
+    __sec_snippet_ngx__: '{{configs["security"]["path"]}}'
   when: env_choice == "local"
 
 - name: VM setup
@@ -67,6 +63,7 @@
     __conf_name_ngx__: '{{configs["app_common"]["path"]}}'
     __cert_prefix_ngx__: '{{app_prefix}}'
     __common_name_ngx__: '{{common_name}}'
+    __sec_snippet_ngx__: '{{configs["security"]["path"]}}'
   when: env_choice == "vm"
 
 - name: Remote setup
@@ -78,7 +75,7 @@
     __keys_ngx__: 
       pb_api_key: '{{keys["pb_api_key"]}}'
       pb_secret: '{{keys["pb_secret"]}}'
-    __root_config__: '{{root_config}}'
+    __sec_snippet_ngx__: '{{configs["security"]["path"]}}'
   when: env_choice == "remote"
 - name: Root config 
   include_tasks: root_config.yml
