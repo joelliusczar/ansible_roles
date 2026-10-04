@@ -59,7 +59,7 @@
     __env_name_ngx__: '{{env_name}}'
     __common_name_ngx__: '{{common_name}}'
     __sec_snippets_ngx__: '{{configs["security"]["path"]}}'
-    __optional_snippets_ngx__: '{{configs["app_snippets"]["path"]}}'
+    __optional_snippets_ngx__: '{{optional_snippet_dir}}'
   when: env_choice == "local"
 
 - name: VM setup
@@ -69,7 +69,7 @@
     __cert_prefix_ngx__: '{{app_prefix}}'
     __common_name_ngx__: '{{common_name}}'
     __sec_snippets_ngx__: '{{configs["security"]["path"]}}'
-    __optional_snippets_ngx__: '{{configs["app_snippets"]["path"]}}'
+    __optional_snippets_ngx__: '{{optional_snippet_dir}}'
   when: env_choice == "vm"
 
 - name: Remote setup
@@ -82,7 +82,7 @@
       pb_api_key: '{{keys["pb_api_key"]}}'
       pb_secret: '{{keys["pb_secret"]}}'
     __sec_snippets_ngx__: '{{configs["security"]["path"]}}'
-    __optional_snippets_ngx__: '{{configs["app_snippets"]["path"]}}'
+    __optional_snippets_ngx__: '{{optional_snippet_dir}}'
   when: env_choice == "remote"
 - name: Root config 
   include_tasks: root_config.yml
@@ -91,12 +91,13 @@
 - name: Manually copy configs
   copy:
     remote_src: true
-    src: '{{item["value"]["path"]}}'
-    dest: '{{item["value"]["backup"]}}'
+    src: '{{ngx_file["value"]["path"]}}'
+    dest: '{{ngx_file["value"]["backup"]}}'
   failed_when: false
   loop: '{{configs | dict2items}}'
+  loop_var: ngx_file
   loop_control:
-    label: '{{item["key"]}}'
+    label: '{{ngx_file["key"]}}'
 - name: Safely replace app specific config
   block:
     - name: Replace app Specific config
@@ -129,12 +130,13 @@
   always:
     - name: Manually clean up backup configs
       file:
-        path: '{{item["value"]["backup"]}}'
+        path: '{{ngx_file["value"]["backup"]}}'
         state: absent
       failed_when: false
       loop: '{{configs | dict2items}}'
+      loop_var: ngx_file
       loop_control:
-        label: '{{item["key"]}}'
+        label: '{{ngx_file["key"]}}'
       when: updated is changed
 
 

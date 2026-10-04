@@ -26,7 +26,7 @@ server {
 	proxy_set_header X-Real-IP $remote_addr;
 
 	include {{security_snippets}};
-	include {{optional_snippets}}/*;
+	include {{optional_snippets}}*;
 
 	location / {
 		root {{serve_dir}};
