@@ -9,9 +9,13 @@
   file:
     path: /etc/nginx/sites-enabled/default
     state: absent
+- name: Define directory names
+  set_fact:
+    backup_dir: /tmp/nginx_backups
+    optional_snippet_dir: /etc/nginx/sites-enabled/snippets/optional.d/
 - name: Create backup directory
   file:
-    path: '/tmp/nginx_backups'
+    path: '{{backup_dir}}'
     state: directory
 - name: Define remote facts
   set_fact:
@@ -33,20 +37,20 @@
     configs:
       root:
         path: '{{root_config}}'
-        backup: '/tmp/nginx_backups/root'
+        backup: '{{backup_dir}}/root'
       security:
         path: /etc/nginx/sites-enabled/snippets/security.conf
-        backup: '/tmp/nginx_backups/security'
+        backup: '{{backup_dir}}/security'
       app_common:
         path: '/etc/nginx/sites-enabled/{{conf_name}}.conf'
-        backup: '/tmp/nginx_backups/{{conf_name}}'
+        backup: '{{backup_dir}}/{{conf_name}}'
       app_snippet:
-        path: '/etc/nginx/sites-enabled/snippets/optional.d/{{conf_name}}'
-        backup: '/tmp/nginx_backups/{{conf_name}}.snippet'
+        path: '{{optional_snippet_dir}}/{{conf_name}}'
+        backup: '{{backup_dir}}/{{conf_name}}.snippet'
 - name: Create snippets directory
   become: true
   file:
-    path: /etc/nginx/sites-enabled/snippets/optional.d
+    path: '{{optional_snippet_dir}}'
     state: directory
 - name: Tasks for a local server
   include_tasks: local.yml
