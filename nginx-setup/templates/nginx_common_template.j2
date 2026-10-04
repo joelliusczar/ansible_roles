@@ -18,7 +18,7 @@ server {
 	listen {{listen}};
 	listen [::]:{{listen}};
 
-	limit_req zone=api bust=20 nodelay;
+	limit_req zone=api burst=20 nodelay;
 	limit_conn apiconn 10;
 
 	access_log /var/log/nginx/access.log combined if=$loggable;
