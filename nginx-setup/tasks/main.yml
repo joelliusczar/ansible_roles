@@ -32,7 +32,7 @@
   set_fact:
     configs:
       root:
-        path: __root_config__
+        path: '{{root_config}}'
         backup: '/tmp/nginx_backups/root'
       security:
         path: /etc/nginx/sites-enabled/snippets/security.conf
