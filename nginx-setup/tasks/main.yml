@@ -95,8 +95,8 @@
     dest: '{{ngx_file["value"]["backup"]}}'
   failed_when: false
   loop: '{{configs | dict2items}}'
-  loop_var: ngx_file
   loop_control:
+    loop_var: ngx_file
     label: '{{ngx_file["key"]}}'
 - name: Safely replace app specific config
   block:
@@ -134,8 +134,8 @@
         state: absent
       failed_when: false
       loop: '{{configs | dict2items}}'
-      loop_var: ngx_file
       loop_control:
+        loop_var: ngx_file
         label: '{{ngx_file["key"]}}'
       when: updated is changed
 
