@@ -13,50 +13,93 @@
   file:
     path: '/tmp/nginx_backups'
     state: directory
+- name: Define remote facts
+  set_fact:
+    conf_name: '{{app_prefix}}'
+    env_choice: remote
+  when: ansible_host not in ["127.0.0.1", "localhost"] and not "192.168.0.0/16"|ansible.utils.network_in_usable(ansible_host)
+- name: Define vm facts
+  set_fact:
+    conf_name: '{{app_prefix}}'
+    env_choice: vm
+  when: ansible_host not in ["127.0.0.1", "localhost"] and "192.168.0.0/16"|ansible.utils.network_in_usable(ansible_host)
+- name: Define local facts
+  set_fact:
+    conf_name: '{{app_prefix}}_{{env_name}}'
+    env_choice: local
+  when: ansible_host in ["127.0.0.1", "localhost"]
+- name: Define config locations
+  set_fact:
+    configs:
+      root:
+        path: __root_config__
+        backup: '/tmp/nginx_backups/root'
+      security:
+        path: /etc/nginx/sites-enabled/snippets/security.conf
+        backup: '/tmp/nginx_backups/security'
+      app_common:
+        path: '/etc/nginx/sites-enabled/{{conf_name}}.conf'
+        backup: '/tmp/nginx_backups/{{conf_name}}'
+      app_snippet:
+        path: '/etc/nginx/sites-enabled/snippets/optional.d/{{conf_name}}'
+        backup: '/tmp/nginx_backups/{{conf_name}}.snippet'
+- name: Create snippets directory
+  become: true
+  file:
+    path: /etc/nginx/sites-enabled/snippets/optional.d
+    state: directory
+- name: Copy ssl snippets
+  become: true
+  template:
+    src: security_snippets_template.j2
+    dest: /etc/nginx/sites-enabled/snippets/security.conf
 - name: Tasks for a local server
   include_tasks: local.yml
   vars:
-    __conf_name_ngx__: '{{app_prefix}}_{{env_name}}'
+    __conf_name_ngx__: '{{configs["app_common"]["path"]}}'
     __env_name_ngx__: '{{env_name}}'
     __common_name_ngx__: '{{common_name}}'
-  when: ansible_host in ["127.0.0.1", "localhost"]
+  when: env_choice == "local"
 
 - name: VM setup
   include_tasks: vm.yml
   vars:
+    __conf_name_ngx__: '{{configs["app_common"]["path"]}}'
     __cert_prefix_ngx__: '{{app_prefix}}'
-    __conf_name_ngx__: '{{app_prefix}}'
     __common_name_ngx__: '{{common_name}}'
-  when: ansible_host not in ["127.0.0.1", "localhost"] and "192.168.0.0/16"|ansible.utils.network_in_usable(ansible_host)
+  when: env_choice == "vm"
 
 - name: Remote setup
   include_tasks: remote.yml
   vars:
+    __conf_name_ngx__: '{{configs["app_common"]["path"]}}'
     __cert_prefix_ngx__: '{{app_prefix}}'
-    __conf_name_ngx__: '{{app_prefix}}'
     __server_name_ngx__: '{{server_name}}'
     __keys_ngx__: 
       pb_api_key: '{{keys["pb_api_key"]}}'
       pb_secret: '{{keys["pb_secret"]}}'
     __root_config__: '{{root_config}}'
-  when: ansible_host not in ["127.0.0.1", "localhost"] and not "192.168.0.0/16"|ansible.utils.network_in_usable(ansible_host)
+  when: env_choice == "remote"
 - name: Root config 
   include_tasks: root_config.yml
   vars:
-    __root_config__: '{{root_config}}'
+    __root_config__: '{{configs["root"]["path"]}}'
+- name: Manually copy configs
+  copy:
+    remote_src: true
+    src: '{{item["value"]["path"]}}'
+    dest: '{{item["value"]["backup"]}}'
+  failed_when: false
+  loop: '{{configs | dict2items}}'
+  loop_control:
+    label: '{{item["key"]}}'
 - name: Safely replace app specific config
   block:
-    - name: Manually Backup app specific configs
-      copy:
-        remote_src: true
-        src: '/etc/nginx/sites-enabled/snippets/optional.d/app_{{env_name}}'
-        dest: '/tmp/nginx_backups/{{env_name}}'
-      failed_when: false
     - name: Replace app Specific config
       become: true
       template: 
         src: nginx_template.j2
-        dest: '/etc/nginx/sites-enabled/snippets/optional.d/app_{{env_name}}'
+        dest: '{{configs["app_snippet"]["path"]}}'
       notify: Restart nginx
       register:
         updated
@@ -65,11 +108,25 @@
       become: true
       when: updated is changed
   rescue:
-    - name: Restore old config
+    - name: Restore old configs manually
       copy:
         remote_src: true
-        src: '/tmp/nginx_backups/{{env_name}}'
-        dest: '/etc/nginx/sites-enabled/snippets/optional.d/app_{{env_name}}'
+        src: '{{item["value"]["backup"]}}'
+        dest: '{{item["value"]["path"]}}'
+      failed_when: false
+      loop: '{{configs | dict2items}}'
+      loop_control:
+        label: '{{item["key"]}}'
+      when: updated is changed
+  always:
+    - name: Manually clean up backup configs
+      file:
+        path: '{{item["value"]["backup"]}}'
+        state: absent
+      failed_when: false
+      loop: '{{configs | dict2items}}'
+      loop_control:
+        label: '{{item["key"]}}'
       when: updated is changed
 
 
