@@ -12,7 +12,7 @@
 - name: Define directory names
   set_fact:
     backup_dir: /tmp/nginx_backups
-    optional_snippet_dir: /etc/nginx/sites-enabled/snippets/optional.d/
+    optional_snippet_dir: /etc/nginx/snippets/optional.d/
 - name: Create backup directory
   file:
     path: '{{backup_dir}}'
@@ -39,7 +39,7 @@
         path: '{{root_config}}'
         backup: '{{backup_dir}}/root'
       security:
-        path: /etc/nginx/sites-enabled/snippets/security.conf
+        path: /etc/nginx/snippets/security.conf
         backup: '{{backup_dir}}/security'
       app_common:
         path: '/etc/nginx/sites-enabled/{{conf_name}}.conf'
