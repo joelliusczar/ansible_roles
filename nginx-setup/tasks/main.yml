@@ -12,7 +12,7 @@
 - name: Define directory names
   set_fact:
     backup_dir: /tmp/nginx_backups
-    optional_snippet_dir: /etc/nginx/snippets/optional.d/
+    optional_snippet_dir: /etc/nginx/optional.d/
 - name: Create backup directory
   file:
     path: '{{backup_dir}}'
@@ -98,16 +98,16 @@
   loop_control:
     loop_var: ngx_file
     label: '{{ngx_file["key"]}}'
-- name: Safely replace app specific config
+- name: Replace app Specific config
+  become: true
+  template: 
+    src: nginx_template.j2
+    dest: '{{configs["app_snippets"]["path"]}}'
+  notify: Restart nginx
+  register:
+    updated
+- name: Validate and restore if needed app specific config
   block:
-    - name: Replace app Specific config
-      become: true
-      template: 
-        src: nginx_template.j2
-        dest: '{{configs["app_snippets"]["path"]}}'
-      notify: Restart nginx
-      register:
-        updated
     - name: Run validation
       command: 'nginx -t'
       become: true
@@ -116,12 +116,13 @@
     - name: Restore old configs manually
       copy:
         remote_src: true
-        src: '{{item["value"]["backup"]}}'
-        dest: '{{item["value"]["path"]}}'
+        src: '{{ngx_file["value"]["backup"]}}'
+        dest: '{{ngx_file["value"]["path"]}}'
       failed_when: false
       loop: '{{configs | dict2items}}'
       loop_control:
-        label: '{{item["key"]}}'
+        loop_var: ngx_file
+        label: '{{ngx_file["key"]}}'
       when: updated is changed
     - name: End playbook
       fail: 
