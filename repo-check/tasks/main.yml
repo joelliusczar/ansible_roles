@@ -22,7 +22,7 @@
         skip_to_exit: true
     - name: Exiting
       meta: end_play
-  when: uncommitted_choice.user_input|lower|default('y') != 'y'
+  when: uncommitted_choice.user_input|lower|default('y') != 'y' or uncommitted_choice.user_input|lower != 'yes'
 - name: Check for unpushed changes
   shell: '[ "$(git rev-parse @)" != "$(git rev-parse @{u})" ]'
   register: unpushed
