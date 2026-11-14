@@ -10,8 +10,8 @@ server {
 }
 
 server {
-	listen {{listen}};
-	listen [::]:{{listen}};
+	listen {{listen}} http2;
+	listen [::]:{{listen}} http2;
 
 	limit_req zone=api burst=20 nodelay;
 	limit_conn apiconn 10;

@@ -5,23 +5,23 @@
     path: '{{__root_config__}}'
     insertafter: '^http {'
     line: '    server_tokens off;'
-    regexp: '^ *#? *server_tokens .+;$'
+    regexp: '^ *#? *server_tokens .+; *$'
 - name: Add loggable map
   blockinfile:
     path: '{{__root_config__}}'
     marker: '# {mark} ANSIBLE - loggable map'
     insertafter: '^http {'
     block: |
-      map $status $loggable {
-        444 0;
-        default 1;
-      }
+          map $status $loggable {
+            444 0;
+            default 1;
+          }
 
   become: true
 - name: Ignore 444
   become: true
   lineinfile:
     path: '{{__root_config__}}'
-    insertafter: '^http {'
+    insertafter: '^ *# END ANSIBLE - loggable map'
     line: '    access_log /var/log/nginx/access.log combined if=$loggable;'
     regexp: '^ *access_log /var/log/nginx/access.log; *$'
