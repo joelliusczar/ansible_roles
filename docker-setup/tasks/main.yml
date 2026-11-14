@@ -1,0 +1,87 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for docker-setup
+- name: Update apt cache if needed
+  apt: update_cache=true cache_valid_time=3600
+  become: true
+  when: ansible_os_family == "Debian"
+- name: Remove existing docker packages
+  shell: 
+    cmd: |
+      sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc docker-buildx podman-docker containerd runc | cut -f1) &&
+      touch /etc/docker_removed
+    creates: /etc/docker_removed
+  become: true
+  when: ansible_distribution == "Ubuntu"
+- name: Remove existing docker packages
+  shell: 
+    cmd: |
+      apt remove $(dpkg --get-selections docker.io docker-compose docker-doc docker-buildx podman-docker containerd runc | cut -f1) &&
+      touch /etc/docker_removed
+    creates: /etc/docker_removed
+  become: true
+  when: ansible_distribution == "Debian
+- name: Install ca-certificates
+  become: true
+  package:
+    name: ca-certificates
+- name: Create keyring directory
+  file:
+    path: /etc/apt/keyrings
+    mode: '0755'
+  become: true
+- name: Download Dockers GPG key
+  get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: 'a+r'
+  become: true
+  when: ansible_distribution == "Ubuntu"
+- name: Download Dockers GPG key
+  get_url:
+    url: https://download.docker.com/linux/debian/gp
+    dest: /etc/apt/keyrings/docker.asc
+    mode: 'a+r'
+  become: true
+  when: ansible_distribution == "Debian"
+- name: Add the repository to Apt sources
+  blockinfile:
+    path: /etc/apt/sources.list.d/docker.sources
+    marker: '# {mark} ANSIBLE - docker source'
+    block: |
+      URIs: https://download.docker.com/linux/ubuntu
+      Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+      Components: stable
+      Architectures: $(dpkg --print-architecture)
+      Signed-By: /etc/apt/keyrings/docker.asc
+    create: true
+  become: true
+  when: ansible_distribution == "Ubuntu"
+- name: Add the repository to Apt sources
+  blockinfile:
+    path: /etc/apt/sources.list.d/docker.sources
+    marker: '# {mark} ANSIBLE - docker source'
+    block: |
+      Types: deb
+      URIs: https://download.docker.com/linux/debian
+      Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
+      Components: stable
+      Architectures: $(dpkg --print-architecture)
+      Signed-By: /etc/apt/keyrings/docker.asc
+    create: true
+  become: true
+  when: ansible_distribution == "Debian"
+- name: apt update
+  command: apt update
+  become: true
+  when: ansible_os_family == "Debian"
+- name: Install docker packeges
+  become: true
+  package:
+    name: '{{item}}'
+  loop:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
