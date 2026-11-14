@@ -5,7 +5,7 @@
   copy:
     src: history_cleaner.py
     dest: '/home/{{mt_user}}/'
-- name: Update icecast config
+- name: Update vim config
   lineinfile:
     dest: '/home/{{mt_user}}/.vimrc'
     regexp: '{{item.regexp}}'

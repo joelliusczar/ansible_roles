@@ -47,12 +47,12 @@
 - name: Set suite
   shell:
     cmd: . /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}"
-  register: suite_output
+  register: suite_output_ubuntu
   when: ansible_distribution == "Ubuntu"
 - name: Set suite
   shell:
     cmd: . /etc/os-release && echo "$VERSION_CODENAME"
-  register: suite_output
+  register: suite_output_debian
   when: ansible_distribution == "Debian"
 - name: Set architectures
   shell:
@@ -64,13 +64,15 @@
     path: /etc/apt/sources.list.d/docker.sources
     marker: '# {mark} ANSIBLE - docker source'
     block: |
+      Types: deb
       URIs: https://download.docker.com/linux/ubuntu
-      Suites: {{suite_output.stdout}}
+      Suites: {{suite_output_ubuntu.stdout}}
       Components: stable
       Architectures: {{architectures_output.stdout}}
       Signed-By: /etc/apt/keyrings/docker.asc
     create: true
   become: true
+  when: ansible_distribution == "Ubuntu"
 - name: Add the repository to Apt sources
   blockinfile:
     path: /etc/apt/sources.list.d/docker.sources
@@ -78,7 +80,7 @@
     block: |
       Types: deb
       URIs: https://download.docker.com/linux/debian
-      Suites: {{suite_output.stdout}}
+      Suites: {{suite_output_debian.stdout}}
       Components: stable
       Architectures: {{architectures_output.stdout}}
       Signed-By: /etc/apt/keyrings/docker.asc
