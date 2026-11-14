@@ -1,9 +1,9 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# tasks file for prometheus-setup
+# tasks file for fail2ban-setup
 - name: Install fail2ban
   package: 
-    name: '{{packages["fail2ban"]}}'
+    name: '{{install_name}}'
   become: true
 - name: Tweak sshd scanning
   blockinfile:
